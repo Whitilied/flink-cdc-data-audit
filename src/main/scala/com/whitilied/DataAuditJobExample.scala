@@ -1,11 +1,15 @@
 package com.whitilied
 
-import com.alibaba.ververica.cdc.connectors.mysql.MySQLSource
-import com.alibaba.ververica.cdc.connectors.mysql.table.StartupOptions
-import com.alibaba.ververica.cdc.debezium.DebeziumSourceFunction
+import com.ververica.cdc.connectors.mysql.MySqlSource
+import com.ververica.cdc.connectors.mysql.table.StartupOptions
+import com.ververica.cdc.debezium.DebeziumSourceFunction
 import com.whitilied.util.JdbcUtil
 import com.whitilied.util.JdbcUtil._
+import org.apache.flink.api.common.restartstrategy.RestartStrategies
 import org.apache.flink.connector.jdbc.{JdbcConnectionOptions, JdbcExecutionOptions, JdbcSink, JdbcStatementBuilder}
+import org.apache.flink.contrib.streaming.state.{EmbeddedRocksDBStateBackend, RocksDBStateBackend}
+import org.apache.flink.runtime.state.storage.FileSystemCheckpointStorage
+import org.apache.flink.streaming.api.environment.CheckpointConfig.ExternalizedCheckpointCleanup
 import org.apache.flink.streaming.api.functions.sink.SinkFunction
 import org.apache.flink.streaming.api.scala.{StreamExecutionEnvironment, _}
 
@@ -28,7 +32,7 @@ object DataAuditJobExample {
     val dbName = args(4)
     val dbTargetTable = args(5)
 
-    val dbUrl = s"jdbc:mysql://$dbHost:$dbPort/$dbName"
+    val dbUrl = s"jdbc:mysql://$dbHost:$dbPort/$dbName?useSSL=false"
 
     if (!existsChangeTable(dbUrl, dbUser, dbPassword, dbTargetTable)) {
       println("change table not exists, init it")
@@ -38,7 +42,12 @@ object DataAuditJobExample {
       showTableColumns(dbUrl, dbUser, dbPassword, dbTargetTable)
     }
 
-    val sourceFunction: DebeziumSourceFunction[RowData] = MySQLSource.builder[RowData]()
+    val env = StreamExecutionEnvironment.getExecutionEnvironment
+    env.setRestartStrategy(RestartStrategies.fixedDelayRestart(5, 10000L))
+    env.getCheckpointConfig.enableExternalizedCheckpoints(ExternalizedCheckpointCleanup.RETAIN_ON_CANCELLATION)
+    env.setStateBackend(new EmbeddedRocksDBStateBackend())
+
+    val sourceFunction: DebeziumSourceFunction[RowData] = MySqlSource.builder[RowData]()
       .hostname(dbHost)
       .port(dbPort)
       .databaseList(dbName) // monitor all tables under inventory database
@@ -46,10 +55,9 @@ object DataAuditJobExample {
       .username(dbUser)
       .password(dbPassword)
       .deserializer(new RowDataDeserializationSchema()) // converts SourceRecord to String
-      .startupOptions(StartupOptions.latest())
+//      .startupOptions(StartupOptions.latest())
       .build()
 
-    val env = StreamExecutionEnvironment.getExecutionEnvironment
 
     val baseFields = Seq("_id", "_kind", "_ts")
     val busFields = JdbcUtil.showTableColumns(dbUrl, dbUser, dbPassword, dbTargetTable)
@@ -101,11 +109,16 @@ object DataAuditJobExample {
         .build())
 
     env
+      .enableCheckpointing(5000L)
       .addSource(sourceFunction)
       .map(s => s)
+      .map(s => {
+        println(s)
+        s
+      })
       .addSink(sink)
 
-    env.execute()
+    env.execute(s"flink-cdc-data-audit-$dbName-$dbTargetTable")
   }
 
 }

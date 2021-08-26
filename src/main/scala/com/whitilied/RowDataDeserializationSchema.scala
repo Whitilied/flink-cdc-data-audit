@@ -1,6 +1,6 @@
 package com.whitilied
 
-import com.alibaba.ververica.cdc.debezium.DebeziumDeserializationSchema
+import com.ververica.cdc.debezium.DebeziumDeserializationSchema
 import io.debezium.data.Envelope
 import io.debezium.data.Envelope.Operation
 import org.apache.flink.api.common.typeinfo.TypeInformation
@@ -37,6 +37,7 @@ class RowDataDeserializationSchema extends DebeziumDeserializationSchema[RowData
         collector.collect(RowData(gtids, RowKind.UPDATE_AFTER.shortString(), timestamp, after))
       case Operation.DELETE =>
         collector.collect(RowData(gtids, RowKind.DELETE.shortString(), timestamp, before))
+      case _ =>
     }
   }
 

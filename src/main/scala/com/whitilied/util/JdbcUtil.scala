@@ -5,6 +5,8 @@ import scala.collection.mutable.ListBuffer
 
 object JdbcUtil {
 
+  Class.forName("com.mysql.cj.jdbc.Driver")
+
   def showCreateTable(dbUrl: String, user: String, password: String, targetTale: String) = {
     val conn = DriverManager.getConnection(dbUrl, user, password)
     val ps = conn.createStatement()

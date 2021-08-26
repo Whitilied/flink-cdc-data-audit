@@ -11,7 +11,9 @@ organization := "com.whitilied"
 
 ThisBuild / scalaVersion := "2.12.14"
 
-val flinkVersion = "1.13.1"
+scalacOptions += "-target:jvm-1.8"
+
+val flinkVersion = "1.13.2"
 
 val flinkScope = "provided"
 
@@ -25,10 +27,11 @@ val flinkDependencies = Seq(
   "org.apache.flink" %% "flink-table-planner-blink" % flinkVersion % flinkScope,
   "org.apache.flink" %% "flink-streaming-scala" % flinkVersion % flinkScope,
   "org.apache.flink" %% "flink-connector-jdbc" % flinkVersion,
+  "org.apache.flink" %% "flink-statebackend-rocksdb" % flinkVersion,
   // CDC
-  "com.alibaba.ververica" % "flink-connector-mysql-cdc" % "1.4.0",
+  "com.ververica" % "flink-sql-connector-mysql-cdc" % "2.0.0",
   // DB
-  "mysql" % "mysql-connector-java" % "5.1.49",
+  "mysql" % "mysql-connector-java" % "8.0.26",
   // Other
   "com.fasterxml.jackson.core" % "jackson-databind" % "2.10.5",
   "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.10.5",
@@ -65,9 +68,12 @@ ThisBuild / assemblyMergeStrategy := {
   case PathList("com", "codahale", xs @ _*) => MergeStrategy.last
   case PathList("com", "yammer", xs @ _*) => MergeStrategy.last
   case PathList("com", "fasterxml", xs @ _*) => MergeStrategy.last
+  case PathList("com", "mysql", xs @ _*) => MergeStrategy.last
   case "about.html" => MergeStrategy.rename
   case "META-INF/ECLIPSEF.RSA" => MergeStrategy.last
   case "META-INF/mailcap" => MergeStrategy.last
+  case "META-INF/INFO_BIN" => MergeStrategy.last
+  case "META-INF/INFO_SRC" => MergeStrategy.last
   case "META-INF/mimetypes.default" => MergeStrategy.last
   case "plugin.properties" => MergeStrategy.last
   case "log4j.properties" => MergeStrategy.last
