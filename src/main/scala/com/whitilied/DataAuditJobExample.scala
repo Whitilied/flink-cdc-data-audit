@@ -65,7 +65,7 @@ object DataAuditJobExample {
       .filter(_ => true) // 过滤条件？
 
     val sqlStr =
-      s"""insert into $dbName.${dbTargetTable}_change
+      s"""insert ignore into $dbName.${dbTargetTable}_change
          |(${totalFields.mkString(",")})
          |values
          |(${Array.fill(totalFields.length)("?").mkString(",")})""".stripMargin

@@ -14,6 +14,7 @@ ThisBuild / scalaVersion := "2.12.14"
 scalacOptions += "-target:jvm-1.8"
 
 val flinkVersion = "1.13.2"
+val flinkCdcVersion = "2.0.2"
 
 val flinkScope = "provided"
 
@@ -29,7 +30,7 @@ val flinkDependencies = Seq(
   "org.apache.flink" %% "flink-connector-jdbc" % flinkVersion,
   "org.apache.flink" %% "flink-statebackend-rocksdb" % flinkVersion,
   // CDC
-  "com.ververica" % "flink-sql-connector-mysql-cdc" % "2.0.0",
+  "com.ververica" % "flink-sql-connector-mysql-cdc" % flinkCdcVersion,
   // DB
   "mysql" % "mysql-connector-java" % "8.0.26",
   // Other
